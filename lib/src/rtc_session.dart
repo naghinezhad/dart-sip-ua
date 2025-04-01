@@ -1,11 +1,9 @@
-// Dart imports:
 import 'dart:async';
 
-// Package imports:
+import 'package:collection/collection.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:sdp_transform/sdp_transform.dart' as sdp_transform;
 
-// Project imports:
 import '../sip_ua.dart';
 import 'constants.dart' as DartSIP_C;
 import 'constants.dart';
@@ -95,6 +93,9 @@ class RTCSession extends EventManager implements Owner {
   // The RTCPeerConnection instance (public attribute).
   RTCPeerConnection? _connection;
 
+  // RTPSender List
+  final List<RTCRtpSender> _senders = <RTCRtpSender>[];
+
   // Incoming/Outgoing request being currently processed.
   dynamic _request;
 
@@ -168,8 +169,10 @@ class RTCSession extends EventManager implements Owner {
   @override
   int get TerminatedCode => RtcSessionState.terminated.index;
 
-  RTCDTMFSender get dtmfSender =>
-      _connection!.createDtmfSender(_localMediaStream!.getAudioTracks()[0]);
+  RTCDTMFSender? get dtmfSender => _senders
+      .firstWhereOrNull((RTCRtpSender item) =>
+          item.track != null && item.track!.kind == 'audio')
+      ?.dtmfSender;
 
   String? get contact => _contact;
 
@@ -628,8 +631,9 @@ class RTCSession extends EventManager implements Owner {
     if (stream != null) {
       switch (sdpSemantics) {
         case 'unified-plan':
-          stream.getTracks().forEach((MediaStreamTrack track) {
-            _connection!.addTrack(track, stream!);
+          stream.getTracks().forEach((MediaStreamTrack track) async {
+            RTCRtpSender sender = await _connection!.addTrack(track, stream!);
+            _senders.add(sender);
           });
           break;
         case 'plan-b':
@@ -2395,8 +2399,9 @@ class RTCSession extends EventManager implements Owner {
     if (stream != null) {
       switch (sdpSemantics) {
         case 'unified-plan':
-          stream.getTracks().forEach((MediaStreamTrack track) {
-            _connection!.addTrack(track, stream!);
+          stream.getTracks().forEach((MediaStreamTrack track) async {
+            RTCRtpSender sender = await _connection!.addTrack(track, stream!);
+            _senders.add(sender);
           });
           break;
         case 'plan-b':

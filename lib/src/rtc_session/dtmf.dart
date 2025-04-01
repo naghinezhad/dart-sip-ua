@@ -1,7 +1,5 @@
-// Package imports:
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
-// Project imports:
 import '../../sip_ua.dart';
 import '../constants.dart';
 import '../event_manager/event_manager.dart';
@@ -70,8 +68,8 @@ class DTMF extends EventManager {
     _interToneGap = options['interToneGap'];
 
     if (_mode == DtmfMode.RFC2833) {
-      RTCDTMFSender dtmfSender = _session.dtmfSender;
-      dtmfSender.insertDTMF(_tone!,
+      RTCDTMFSender? dtmfSender = _session.dtmfSender;
+      dtmfSender?.insertDTMF(_tone!,
           duration: _duration!, interToneGap: _interToneGap!);
     } else if (_mode == DtmfMode.INFO) {
       extraHeaders.add('Content-Type: application/dtmf-relay');
